@@ -1,8 +1,14 @@
 const { Contact } = require("../models/contact");
-const { HttpError, cntrlWrapper } = require("../helpers");
+const { HttpError, ctrlWrapper } = require("../helpers");
 
 const getAll = async (req, res, next) => {
-  const result = await Contact.find();
+  const {_id: owner} = req.user;
+  const {page = 1, limit = 20} = req.query;
+  const skip = (page - 1) * limit;
+
+  const result = await Contact.find({owner}, {skip, limit})
+                              .populate("owner", "name email");
+
   res.status(200).json(result);
 };
 
@@ -18,7 +24,8 @@ const getById = async (req, res, next) => {
 };
 
 const add = async (req, res, next) => {
-  const result = await Contact.create(req.body);
+  const {_id: owner} = req.user;
+  const result = await Contact.create({...req.body, owner});
   res.status(201).json(result);
 };
 
@@ -71,10 +78,10 @@ const deleteById = async (req, res, next) => {
 };
 
 module.exports = {
-  getAll: cntrlWrapper(getAll),
-  getById: cntrlWrapper(getById),
-  add: cntrlWrapper(add),
-  updateById: cntrlWrapper(updateById),
-  updateFavourite: cntrlWrapper(updateFavourite),
-  deleteById: cntrlWrapper(deleteById),
+  getAll: ctrlWrapper(getAll),
+  getById: ctrlWrapper(getById),
+  add: ctrlWrapper(add),
+  updateById: ctrlWrapper(updateById),
+  updateFavourite: ctrlWrapper(updateFavourite),
+  deleteById: ctrlWrapper(deleteById),
 };
